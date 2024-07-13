@@ -1,0 +1,287 @@
+# -- TODO ---
+# - Install Helm
+# - Node Join Cluster
+# - VPN setup
+# - UFW Firewall (verify ports to open)
+- name: Servers configuration prerequisite
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Install necessary packages
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      with_items:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg
+        - vim
+
+    - name: Disable SWAP
+      shell: |
+        swapoff -a
+
+    - name: Disable SWAP in fstab
+      lineinfile:
+        path: /etc/fstab
+        regexp: "^.*swap.*$"
+        line: "#\0"
+        backrefs: yes
+
+    - name: Enable br_netfilter
+      modprobe:
+        name: br_netfilter
+        state: present
+
+    - name: ensure net.bridge.bridge-nf-call-iptables is set to 1
+      sysctl:
+        name: net.bridge.bridge-nf-call-iptables
+        value: "1"
+        state: present
+        reload: yes
+
+    - name: Set net.ipv4.ip_forward to 1
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: "1"
+        state: present
+        reload: yes
+
+- name: Configure Firewall
+  hosts: all
+  become: true
+  tags:
+    - firewall
+  tasks:
+    - name: Install Ufw
+      apt:
+        name: ufw
+        state: present
+        update_cache: yes
+
+    - name: Deny everything and enable Ufw
+      community.general.ufw:
+        state: disabled
+        policy: deny
+
+    - name: Allow OpenSSH
+      community.general.ufw:
+        rule: allow
+        port: "{{ item.port }}"
+        proto: "{{ item.proto }}"
+      with_items:
+        - { port: 22, proto: "tcp" } # ssh
+        - { port: 80, proto: "tcp" } # http
+        - { port: 443, proto: "tcp" } # https
+        - { port: 1194, proto: "udp" } # openvpn
+        - { port: 179, proto: "tcp" }
+        - { port: 4789, proto: "tcp" }
+        - { port: 5473, proto: "tcp" }
+        - { port: 6443, proto: "tcp" }
+        - { port: 2379, proto: "tcp" }
+        - { port: 4149, proto: "tcp" }
+        - { port: 9099, proto: "tcp" }
+        - { port: 10250, proto: "tcp" }
+        - { port: 10255, proto: "tcp" }
+        - { port: 10256, proto: "tcp" }
+
+    - name: Enabled Ufw
+      community.general.ufw:
+        state: enabled
+
+    - name: Enable ufw
+      systemd:
+        name: ufw
+        enable: yes
+        state: started
+
+- name: Install VPN
+  hosts: all
+  become: true
+  tags:
+    - vpn
+  tasks:
+    - name: Get OpenVPN installation script
+      get_url:
+        url: https://raw.githubusercontent.com/angristan/openvpn-install/master/openvpn-install.sh
+        dest: ~/openvpn_install.sh
+        mode: +x
+
+    - name: Run OpenVPN installation script
+      shell: ~/openvpn_install.sh
+      environment:
+        APPROVE_INSTALL: y
+        APPROVE_IP: y
+        IPV6_SUPPORT: n
+        PORT_CHOICE: 1
+        PROTOCOL_CHOICE: 1
+        DNS: 1
+        COMPRESSION_ENABLED: n
+        CUSTOMIZE_ENC: n
+        CLIENT: admin
+        PASS: 1
+        ENDPOINT: "{{ inventory_hostname }}"
+
+    - name: Upload VPN key on Host
+      fetch:
+        src: /home/{{ ansible_user }}/admin.ovpn
+        dest: ./outputs/
+
+- name: Install CRI-O, Kubeadm, Kubelet and Kubectl
+  hosts: all
+  become: yes
+
+  vars:
+    kubeadm_version: "1.30"
+    network_interface: "eth1"
+
+  tasks:
+    - name: Install necessary packages
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      with_items:
+        - curl
+        - software-properties-common
+        - jq
+
+    - name: Remove old sources.list.d file
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /etc/apt/sources.list.d/kubernetes.list
+        - /etc/apt/sources.list.d/cri-o.list
+        - /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        - /etc/apt/keyrings/cri-o-apt-keyring.gpg
+
+    - name: Create keyrings directory
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: 0755
+
+    - name: Add kubernetes GPG keys
+      shell: |
+        curl -fsSL https://pkgs.k8s.io/core:/stable:/v{{ kubeadm_version }}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ kubeadm_version }}/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
+
+    - name: Add cri-o GPG keys
+      shell: |
+        curl -fsSL https://pkgs.k8s.io/addons:/cri-o:/prerelease:/main/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
+        echo "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://pkgs.k8s.io/addons:/cri-o:/prerelease:/main/deb/ /" | tee /etc/apt/sources.list.d/cri-o.list
+
+    - name: Install cri-o, kubeadm, kubelet and kubectl
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      with_items:
+        - cri-o
+        - kubelet
+        - kubeadm
+        - kubectl
+
+    - name: Hold Kubernetes tools at current version
+      dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      with_items:
+        - cri-o
+        - kubelet
+        - kubeadm
+        - kubectl
+
+    - name: Get LOCAL_IP
+      shell: ip --json a s | jq -r '.[] | if .ifname == "{{ network_interface }}" then .addr_info[] | if .family == "inet" then .local else empty end else empty end'
+      register: local_ip
+
+    - name: Configure kubelet
+      lineinfile:
+        path: "/etc/default/kubelet"
+        state: present
+        regexp: "KUBELET_EXTRA_ARGS="
+        line: "KUBELET_EXTRA_ARGS=--node-ip={{ local_ip.stdout }}"
+
+    - name: Add kubectl alias
+      sheel: echo "alias k=kubectl" >> ~/.bashrc
+
+    - name: Enable and start cri-o and kubelet
+      systemd:
+        name: "{{ item }}"
+        enabled: yes
+        state: started
+      with_items:
+        - kubelet
+        - crio
+
+- name: Init Master
+  hosts: masters
+  become: yes
+
+  vars:
+    pod_network_cidr: 192.168.0.0/16
+    cri_socket: unix:///var/run/crio/crio.sock
+    network_interface: "eth1"
+    calico_version: 3.28.0
+
+  tasks:
+    - name: Get LOCAL_IP
+      shell: ip --json a s | jq -r '.[] | if .ifname == "{{ network_interface }}" then .addr_info[] | if .family == "inet" then .local else empty end else empty end'
+      register: local_ip
+
+    - name: Initialize Kubeadm Master
+      shell: |
+        source /etc/environment
+        kubeadm init \
+          --pod-network-cidr={{ pod_network_cidr }} \
+          --cri-socket={{ cri_socket }} \
+          --apiserver-advertise-address={{ local_ip.stdout }} \
+          --node-name $(hostname -s)
+
+    - name: Create kube configuration directory
+      file:
+        path: $HOME/.kube
+        state: directory
+
+    - name: Copy file with owner and permissions
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /root/.kube/config
+        owner: "{{ lookup('pipe', 'id -u') }}"
+        group: "{{ lookup('pipe', 'id -g') }}"
+        remote_src: yes
+
+    - name: Install the Tigera Calico operator and custom resource definitions
+      shell: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/tigera-operator.yaml
+
+    - name: Install Calico by creating the necessary custom resource
+      shell: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/custom-resources.yaml
+
+    - name: Remove the taints on the master
+      shell: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+
+    - name: Save kubeadm join command
+      shell: kubeadm token create --print-join-command
+      register: kubeadm_join_command
+
+- name: Join Worker
+  hosts: workers
+  become: yes
+  tasks:
+    - name: Join Worker
+      shell: "{{ hostvars.master.kubeadm_join_command.stdout }}"
+
+- name: Label worker node
+  hosts: masters
+  become: yes
+  tasks:
+    - name: list only worker nodes
+      shell: |
+        sudo kubectl get nodes --no-headers -o custom-columns=":metadata.name" \
+        | grep worker \
+        | while read node; do sudo kubectl label node $node node-role.kubernetes.io/worker=; done
