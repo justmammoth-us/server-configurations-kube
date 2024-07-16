@@ -50,53 +50,53 @@
         state: present
         reload: yes
 
-- name: Configure Firewall
-  hosts: all
-  become: true
-  tags:
-    - firewall
-  tasks:
-    - name: Install Ufw
-      apt:
-        name: ufw
-        state: present
-        update_cache: yes
+    # - name: Configure Firewall
+    #   hosts: all
+    #   become: true
+    #   tags:
+    #     - firewall
+    #   tasks:
+    #     - name: Install Ufw
+    #       apt:
+    #         name: ufw
+    #         state: present
+    #         update_cache: yes
 
-    - name: Deny everything and enable Ufw
-      community.general.ufw:
-        state: disabled
-        policy: deny
+    #     - name: Deny everything and enable Ufw
+    #       community.general.ufw:
+    #         state: disabled
+    #         policy: deny
 
-    - name: Allow OpenSSH
-      community.general.ufw:
-        rule: allow
-        port: "{{ item.port }}"
-        proto: "{{ item.proto }}"
-      with_items:
-        - { port: 22, proto: "tcp" } # ssh
-        - { port: 80, proto: "tcp" } # http
-        - { port: 443, proto: "tcp" } # https
-        - { port: 1194, proto: "udp" } # openvpn
-        - { port: 179, proto: "tcp" }
-        - { port: 4789, proto: "tcp" }
-        - { port: 5473, proto: "tcp" }
-        - { port: 6443, proto: "tcp" }
-        - { port: 2379, proto: "tcp" }
-        - { port: 4149, proto: "tcp" }
-        - { port: 9099, proto: "tcp" }
-        - { port: 10250, proto: "tcp" }
-        - { port: 10255, proto: "tcp" }
-        - { port: 10256, proto: "tcp" }
+    #     - name: Allow OpenSSH
+    #       community.general.ufw:
+    #         rule: allow
+    #         port: "{{ item.port }}"
+    #         proto: "{{ item.proto }}"
+    #       with_items:
+    #         - { port: 22, proto: "tcp" } # ssh
+    #         - { port: 80, proto: "tcp" } # http
+    #         - { port: 443, proto: "tcp" } # https
+    #         - { port: 1194, proto: "udp" } # openvpn
+    #         - { port: 179, proto: "tcp" }
+    #         - { port: 4789, proto: "tcp" }
+    #         - { port: 5473, proto: "tcp" }
+    #         - { port: 6443, proto: "tcp" }
+    #         - { port: 2379, proto: "tcp" }
+    #         - { port: 4149, proto: "tcp" }
+    #         - { port: 9099, proto: "tcp" }
+    #         - { port: 10250, proto: "tcp" }
+    #         - { port: 10255, proto: "tcp" }
+    #         - { port: 10256, proto: "tcp" }
 
-    - name: Enabled Ufw
-      community.general.ufw:
-        state: enabled
+    # - name: Enabled Ufw
+    #   community.general.ufw:
+    #     state: enabled
 
-    - name: Enable ufw
-      systemd:
-        name: ufw
-        enable: yes
-        state: started
+    # - name: Enable ufw
+    #   systemd:
+    #     name: ufw
+    #     enable: yes
+    #     state: started
 
 - name: Install VPN
   hosts: all
@@ -136,7 +136,6 @@
 
   vars:
     kubeadm_version: "1.30"
-    network_interface: "eth1"
 
   tasks:
     - name: Install necessary packages
@@ -207,9 +206,6 @@
         regexp: "KUBELET_EXTRA_ARGS="
         line: "KUBELET_EXTRA_ARGS=--node-ip={{ local_ip.stdout }}"
 
-    - name: Add kubectl alias
-      sheel: echo "alias k=kubectl" >> ~/.bashrc
-
     - name: Enable and start cri-o and kubelet
       systemd:
         name: "{{ item }}"
@@ -226,7 +222,6 @@
   vars:
     pod_network_cidr: 192.168.0.0/16
     cri_socket: unix:///var/run/crio/crio.sock
-    network_interface: "eth1"
     calico_version: 3.28.0
 
   tasks:
@@ -260,7 +255,13 @@
       shell: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/tigera-operator.yaml
 
     - name: Install Calico by creating the necessary custom resource
-      shell: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/custom-resources.yaml
+      shell: curl https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/custom-resources.yaml -o /tmp/custom-resources.yaml
+
+    - name: Setup Calico network interface
+      lineinfile:
+        path: /tmp/custom-resources.yaml
+        insertafter: "^  calicoNetwork:"
+        line: "    nodeAddressAutodetectionV4:\n      interface: {{ network_interface }}"
 
     - name: Remove the taints on the master
       shell: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
