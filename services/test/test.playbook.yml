@@ -1,0 +1,16 @@
+- name: Deploy test namespace
+  hosts: masters
+  become: yes
+
+  vars: {}
+
+  tasks:
+    - name: Install nginx
+      kubernetes.core.k8s:
+        namespace: default
+        state: present
+        definition: "{{ lookup('file', '{{ item }}') | from_yaml }}"
+      with_items:
+        - ./test.deployment.yml
+        - ./test.ingress.yml
+        - ./test.service.yml

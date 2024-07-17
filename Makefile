@@ -1,2 +1,2 @@
 vagrant:
-	ansible-playbook -i inventory playbook.yml -e "network_interface=eth1"
+	ansible-playbook -i inventory init.playbook.yml -e "network_interface=eth1"
