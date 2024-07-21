@@ -14,6 +14,8 @@ Vagrant.configure("2") do |config|
         vb.cpus = 2
       end
     end
+
+    config.vm.network "forwarded_port", guest: 80, host: 1234, auto_correct: true
   
     # Define worker1
     config.vm.define "worker1" do |worker1|
