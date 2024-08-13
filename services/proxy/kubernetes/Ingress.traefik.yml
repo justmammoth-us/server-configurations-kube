@@ -1,15 +1,15 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: whoami-ingress
+  name: traefik-ingress
 spec:
   rules:
     - http:
         paths:
-          - path: /
+          - path: /dashboard/
             pathType: Prefix
             backend:
               service:
-                name: whoami
+                name: traefik-service
                 port:
-                  name: web
+                  name: dashboard

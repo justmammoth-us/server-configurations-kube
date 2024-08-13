@@ -11,6 +11,6 @@
         state: present
         definition: "{{ lookup('file', '{{ item }}') | from_yaml }}"
       with_items:
-        - ./test.deployment.yml
-        - ./test.ingress.yml
-        - ./test.service.yml
+        - ./deployment.test.yml
+        - ./ingress.test.yml
+        - ./service.test.yml

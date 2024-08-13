@@ -1,3 +1,6 @@
 outputs/*
 *.log
-.vagrant
+.vagrantdev
+dev
+values.yaml
+values.yml
