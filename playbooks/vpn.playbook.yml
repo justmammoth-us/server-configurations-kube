@@ -1,0 +1,38 @@
+- name: Install VPN
+  hosts: all
+  become: true
+  tags:
+    - vpn
+
+  tasks:
+    - name: Retrieve service facts
+      service_facts:
+
+    - name: Get OpenVPN installation script
+      get_url:
+        url: https://raw.githubusercontent.com/angristan/openvpn-install/master/openvpn-install.sh
+        dest: ~/openvpn_install.sh
+        mode: +x
+      when: "'openvpn' not in services"
+
+    - name: Run OpenVPN installation script
+      shell: ~/openvpn_install.sh
+      environment:
+        APPROVE_INSTALL: y
+        APPROVE_IP: y
+        IPV6_SUPPORT: n
+        PORT_CHOICE: 1
+        PROTOCOL_CHOICE: 1
+        DNS: 1
+        COMPRESSION_ENABLED: n
+        CUSTOMIZE_ENC: n
+        CLIENT: "{{ inventory_hostname }}-admin"
+        PASS: 1
+        ENDPOINT: "{{ inventory_hostname }}"
+      when: "'openvpn' not in services"
+
+    - name: Upload VPN key on Host
+      fetch:
+        src: /home/{{ ansible_user }}/{{ inventory_hostname }}-admin.ovpn
+        dest: ./outputs/
+      when: "'openvpn' not in services"

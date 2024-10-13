@@ -1,0 +1,6 @@
+# cp ssh.config.example ssh.config
+Host master
+  HostName X.X.X.X
+  User user
+  Port 22
+  IdentityFile /path/to/private/key

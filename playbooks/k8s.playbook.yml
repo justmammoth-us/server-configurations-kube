@@ -1,0 +1,101 @@
+- name: Install MicroK8s
+  hosts: all
+  become: false
+
+  vars:
+    microk8s_version: '1.31'
+
+  tasks:
+    - name: Install necessary packages
+      become: true
+      apt:
+        name: '{{ item }}'
+        state: present
+        update_cache: yes
+      with_items:
+        - curl
+        - snapd
+        - vim
+
+    - name: Disable SWAP
+      become: true
+      shell: swapoff -a
+
+    - name: Disable SWAP in fstab
+      become: true
+      lineinfile:
+        path: /etc/fstab
+        regexp: '^.*swap.*$'
+        line: "#\0"
+        backrefs: yes
+
+    - name: Install MicroK8s
+      become: true
+      community.general.snap:
+        name: microk8s
+        classic: true
+        channel: '{{ microk8s_version }}'
+
+    - name: Add user to microk8s group
+      become: true
+      user:
+        name: '{{ ansible_user }}'
+        groups: microk8s
+        append: yes
+
+    - name: Reset ssh connection to allow user changes to affect ansible user
+      meta: reset_connection
+
+    - name: Create .kube directory in the user's home directory
+      file:
+        path: '{{ ansible_env.HOME }}/.kube'
+        state: directory
+        mode: '0700'
+
+    - name: Wait for MicroK8s to be ready
+      shell: /snap/bin/microk8s status --wait-ready
+
+    - name: Enable DNS
+      shell: /snap/bin/microk8s enable dns
+
+    #    - name: Enable metallb
+    #      shell: /snap/bin/microk8s enable metallb $(curl ipinfo.io/ip)-$(curl ipinfo.io/ip)
+
+    - name: Create microk8s config
+      shell: /snap/bin/microk8s config > /home/{{ ansible_user }}/.kube/config
+
+    - name: Install kubectl
+      become: true
+      community.general.snap:
+        name: kubectl
+        classic: true
+
+    - name: Install requirements for ansible kubernetes.core role
+      become: true
+      apt:
+        name:
+          - python3-pip
+          - python3-kubernetes
+          - python3-jsonpatch
+        state: present
+        update_cache: yes
+
+    - name: Install helm
+      become: true
+      community.general.snap:
+        name: helm
+        classic: true
+
+    - name: Change kube config mode
+      file:
+        path: '{{ ansible_env.HOME }}/.kube/config'
+        mode: '0700'
+
+    - name: Add serve alias for {{ ansible_user }}
+      lineinfile:
+        path: /home/{{ ansible_user }}/.bashrc
+        line: alias k=kubectl
+        regexp: ^alias k=kubectl$
+        state: present
+        insertafter: EOF
+        create: true

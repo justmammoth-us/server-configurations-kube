@@ -1,6 +1,7 @@
 # -- TODO ---
 # - Install Helm
 # - Node Join Cluster
+# - Install MetalLB
 # - VPN setup
 # - UFW Firewall (verify ports to open)
 - name: Servers configuration prerequisite
@@ -105,11 +106,15 @@
     - vpn
 
   tasks:
+    - name: Retrieve service facts
+      service_facts:
+
     - name: Get OpenVPN installation script
       get_url:
         url: https://raw.githubusercontent.com/angristan/openvpn-install/master/openvpn-install.sh
         dest: ~/openvpn_install.sh
         mode: +x
+      when: "'openvpn' not in services"
 
     - name: Run OpenVPN installation script
       shell: ~/openvpn_install.sh
@@ -122,14 +127,16 @@
         DNS: 1
         COMPRESSION_ENABLED: n
         CUSTOMIZE_ENC: n
-        CLIENT: admin
+        CLIENT: "{{ inventory_hostname }}-admin"
         PASS: 1
         ENDPOINT: "{{ inventory_hostname }}"
+      when: "'openvpn' not in services"
 
     - name: Upload VPN key on Host
       fetch:
-        src: /home/{{ ansible_user }}/admin.ovpn
+        src: /home/{{ ansible_user }}/{{ inventory_hostname }}-admin.ovpn
         dest: ./outputs/
+      when: "'openvpn' not in services"
 
 - name: Install CRI-O, Kubeadm, Kubelet and Kubectl
   hosts: all
@@ -226,6 +233,19 @@
     calico_version: 3.28.0
 
   tasks:
+    - name: Populate service facts
+      service_facts:
+
+    - name: Install requirements for ansible kubernetes.core role
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      with_items:
+        - python3-pip
+        - python3-kubernetes
+        - python3-jsonpatch
+
     - name: Get LOCAL_IP
       shell: ip --json a s | jq -r '.[] | if .ifname == "{{ network_interface }}" then .addr_info[] | if .family == "inet" then .local else empty end else empty end'
       register: local_ip
@@ -238,6 +258,7 @@
           --cri-socket={{ cri_socket }} \
           --apiserver-advertise-address={{ local_ip.stdout }} \
           --node-name $(hostname -s)
+      when: "services['kubelet.service']['state'] == 'stopped'"
 
     - name: Create kube configuration directory
       file:
@@ -252,17 +273,27 @@
         group: "{{ lookup('pipe', 'id -g') }}"
         remote_src: yes
 
-    - name: Install the Tigera Calico operator and custom resource definitions
-      shell: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/tigera-operator.yaml
-
-    - name: Install Calico by creating the necessary custom resource
-      shell: curl https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/custom-resources.yaml -o /tmp/custom-resources.yaml
+    - name: Download the Calico manifest
+      get_url:
+        url: "{{ item }}"
+        dest: /tmp/
+      with_items:
+        - https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/tigera-operator.yaml
+        - https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/custom-resources.yaml
 
     - name: Setup Calico network interface
       lineinfile:
         path: /tmp/custom-resources.yaml
         insertafter: "^  calicoNetwork:"
         line: "    nodeAddressAutodetectionV4:\n      interface: {{ network_interface }}"
+
+    - name: Install Calico
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ item }}"
+      with_items:
+        - /tmp/tigera-operator.yaml
+        - /tmp/custom-resources.yaml
 
     - name: Remove the taints on the master
       shell: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
@@ -276,8 +307,12 @@
   become: yes
 
   tasks:
+    - name: Populate service facts
+      service_facts:
+
     - name: Join Worker
       shell: "{{ hostvars.master.kubeadm_join_command.stdout }}"
+      when: "services['kubelet.service']['state'] == 'stopped'"
 
 - name: Label worker node
   hosts: masters
@@ -289,19 +324,3 @@
         sudo kubectl get nodes --no-headers -o custom-columns=":metadata.name" \
         | grep worker \
         | while read node; do sudo kubectl label node $node node-role.kubernetes.io/worker=; done
-
-- name: Install requirements for ansible kubernetes.core role
-  hosts: masters
-  become: yes
-
-  tasks:
-    - name: Install apt requirements
-      apt:
-        name: "{{ item }}"
-        state: present
-        update_cache: yes
-      with_items:
-        - python3-pip
-        # - python3-PyYAML
-        - python3-kubernetes
-        - python3-jsonpatch

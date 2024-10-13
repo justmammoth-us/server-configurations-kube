@@ -1,0 +1,28 @@
+- name: Deploy Traefik
+  hosts: masters
+
+  vars: {}
+
+  tasks:
+    - name: Copy file with owner and permissions
+      copy:
+        src: ./k8s/helm/traefik-values.yaml
+        dest: /tmp/traefik-values.yaml
+
+    - name: Add a Authentik repository
+      kubernetes.core.helm_repository:
+        binary_path: /snap/bin/helm
+        repo_name: traefik
+        repo_url: https://traefik.github.io/charts
+
+    - name: Install helm
+      kubernetes.core.helm:
+        binary_path: /snap/bin/helm
+        name: traefik
+        chart_ref: traefik/traefik
+        update_repo_cache: true
+        release_namespace: default
+        values_files:
+          - /tmp/traefik-values.yaml
+        state: present
+        # chart_version: v3.1.6

@@ -1,0 +1,6 @@
+masters:
+  hosts:
+    master:
+
+workers:
+  hosts:
