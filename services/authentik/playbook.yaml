@@ -24,11 +24,5 @@
         release_namespace: default
         values_files:
           - /tmp/authentik-values.yaml
-        # chart_version: 2024.8.3
-
-    - name: Apply kubernetes configuration
-      kubernetes.core.k8s:
-        namespace: default
-        definition: "{{ lookup('file', '{{ item }}') | from_yaml }}"
         state: present
-      loop: "{{ q('fileglob', 'k8s/resources/*') }}"
+        # chart_version: 2024.8.3

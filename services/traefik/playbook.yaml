@@ -9,13 +9,13 @@
         src: ./k8s/helm/traefik-values.yaml
         dest: /tmp/traefik-values.yaml
 
-    - name: Add a Authentik repository
+    - name: Add a Traefik repository
       kubernetes.core.helm_repository:
         binary_path: /snap/bin/helm
         repo_name: traefik
         repo_url: https://traefik.github.io/charts
 
-    - name: Install helm
+    - name: Install Traefik Helm
       kubernetes.core.helm:
         binary_path: /snap/bin/helm
         name: traefik
@@ -26,3 +26,10 @@
           - /tmp/traefik-values.yaml
         state: present
         # chart_version: v3.1.6
+
+    - name: Apply kubernetes configuration
+      kubernetes.core.k8s:
+        namespace: default
+        definition: "{{ lookup('file', '{{ item }}') | from_yaml }}"
+        state: present
+      loop: "{{ q('fileglob', 'k8s/resources/*') }}"
