@@ -25,4 +25,4 @@
         values_files:
           - /tmp/authentik-values.yaml
         state: present
-        # chart_version: 2024.8.3
+        chart_version: 2024.8.3
