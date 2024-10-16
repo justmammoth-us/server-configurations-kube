@@ -15,3 +15,6 @@ service-authentik:
 
 service-traefik:
 	ansible-playbook $(inventory) $(ssh_config) services/traefik/playbook.yaml
+
+service-jellyfin:
+	ansible-playbook $(inventory) $(ssh_config) services/jellyfin/playbook.yaml
