@@ -1,7 +1,22 @@
 - name: Deploy jellyfin
   hosts: masters
 
+  vars:
+    jellyfin_helm_version: 1.3.0
+
   tasks:
+    - name: Install Jellyfin Helm
+      kubernetes.core.helm:
+        binary_path: /snap/bin/helm
+        name: jellyfin
+        chart_ref: https://github.com/jellyfin/jellyfin-helm/releases/download/jellyfin-{{ jellyfin_helm_version }}/jellyfin-{{ jellyfin_helm_version }}.tgz
+        update_repo_cache: true
+        release_namespace: default
+        values_files:
+          - /tmp/jellyfin-values.yaml
+        state: present
+        # chart_version: 2024.8.3
+
     - name: Apply kubernetes configuration
       kubernetes.core.k8s:
         namespace: default
