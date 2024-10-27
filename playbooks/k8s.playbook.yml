@@ -4,6 +4,7 @@
 
   vars:
     microk8s_version: '1.31'
+    network_interface: 'ens4'
 
   tasks:
     - name: Install necessary packages
@@ -99,3 +100,17 @@
         state: present
         insertafter: EOF
         create: true
+
+    - name: Get LOCAL_IP
+      shell: ip --json a s | jq -r '.[] | if .ifname == "{{ network_interface }}" then .addr_info[] | if .family == "inet" then .local else empty end else empty end'
+      register: local_ip
+
+    - name: Add node IP to kubelet configuration
+      #shell: echo '--node-ip={{ local_ip.stdout }}' | sudo tee -a /var/snap/microk8s/current/args/kubelet
+      lineinfile:
+        path: /var/snap/microk8s/current/args/kubelet
+        line: --node-ip={{ local_ip.stdout }}
+        create: false
+
+    - name: Restart microk8s
+      shell: sudo snap restart microk8s.daemon-kubelite

@@ -3,8 +3,14 @@
 
   vars:
     jellyfin_helm_version: 1.3.0
+    service_state: present
 
   tasks:
+    - name: Copy file with owner and permissions
+      copy:
+        src: ./k8s/helm/jellyfin-values.yaml
+        dest: /tmp/jellyfin-values.yaml
+
     - name: Install Jellyfin Helm
       kubernetes.core.helm:
         binary_path: /snap/bin/helm
@@ -14,12 +20,4 @@
         release_namespace: default
         values_files:
           - /tmp/jellyfin-values.yaml
-        state: present
-        # chart_version: 2024.8.3
-
-    - name: Apply kubernetes configuration
-      kubernetes.core.k8s:
-        namespace: default
-        definition: "{{ lookup('file', '{{ item }}') | from_yaml_all }}"
-        state: present
-      loop: "{{ q('fileglob', 'k8s/resources/*') }}"
+        state: '{{ service_state }}'
