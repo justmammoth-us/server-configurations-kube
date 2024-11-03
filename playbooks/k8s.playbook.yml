@@ -17,6 +17,7 @@
         - curl
         - snapd
         - vim
+        - jq
 
     - name: Disable SWAP
       become: true
