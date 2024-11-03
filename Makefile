@@ -18,3 +18,6 @@ service-traefik:
 
 service-jellyfin:
 	ansible-playbook $(inventory) $(ssh_config) services/jellyfin/playbook.yaml
+
+service-media-storage:
+	ansible-playbook $(inventory) $(ssh_config) services/media-storage/playbook.yaml

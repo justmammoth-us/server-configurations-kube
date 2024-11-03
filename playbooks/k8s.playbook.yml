@@ -4,7 +4,7 @@
 
   vars:
     microk8s_version: '1.31'
-    network_interface: 'ens4'
+    network_interface: 'ens3'
 
   tasks:
     - name: Install necessary packages
@@ -110,6 +110,7 @@
       #shell: echo '--node-ip={{ local_ip.stdout }}' | sudo tee -a /var/snap/microk8s/current/args/kubelet
       lineinfile:
         path: /var/snap/microk8s/current/args/kubelet
+        regexp: ^--node-ip=.*
         line: --node-ip={{ local_ip.stdout }}
         create: false
 

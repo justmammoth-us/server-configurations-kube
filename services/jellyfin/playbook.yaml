@@ -1,3 +1,5 @@
+- import_playbook: ../media-storage/playbook.yaml
+
 - name: Deploy jellyfin
   hosts: masters
 
@@ -16,7 +18,6 @@
         binary_path: /snap/bin/helm
         name: jellyfin
         chart_ref: https://github.com/jellyfin/jellyfin-helm/releases/download/jellyfin-{{ jellyfin_helm_version }}/jellyfin-{{ jellyfin_helm_version }}.tgz
-        update_repo_cache: true
         release_namespace: default
         values_files:
           - /tmp/jellyfin-values.yaml

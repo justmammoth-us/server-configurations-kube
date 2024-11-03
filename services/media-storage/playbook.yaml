@@ -1,4 +1,4 @@
-- name: Deploy sonarr
+- name: Deploy Media Claimed Volumes
   hosts: masters
 
   tasks:
