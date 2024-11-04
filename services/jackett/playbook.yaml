@@ -1,10 +1,23 @@
-- name: Deploy jackett
+- name: Deploy Jackett
   hosts: masters
 
+  vars:
+    service_state: present
+    values_files: jackett-values.yaml
+    tc_name: jackett
+
   tasks:
-    - name: Apply kubernetes configuration
-      kubernetes.core.k8s:
-        namespace: default
-        definition: "{{ lookup('file', '{{ item }}') | from_yaml_all }}"
-        state: present
-      loop: "{{ q('fileglob', 'k8s/resources/*') }}"
+    - name: Copy file with owner and permissions
+      copy:
+        src: ./k8s/helm/{{ values_files }}
+        dest: /tmp/{{ values_files }}
+
+    - name: Install Helm
+      kubernetes.core.helm:
+        binary_path: /snap/bin/helm
+        name: '{{ tc_name }}'
+        chart_ref: oci://tccr.io/truecharts/{{ tc_name }}
+        release_namespace: default
+        values_files:
+          - /tmp/{{ values_files }}
+        state: '{{ service_state }}'

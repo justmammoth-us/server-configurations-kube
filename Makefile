@@ -30,3 +30,6 @@ service-sonarr:
 
 service-transmission:
 	ansible-playbook $(INVENTORY) $(SSH_CONFIG) services/transmission/playbook.yaml
+
+service-jackett:
+	ansible-playbook $(INVENTORY) $(SSH_CONFIG) services/jackett/playbook.yaml

@@ -36,3 +36,9 @@ spec:
       services:
         - name: radarr
           port: 7878
+
+    - match: Host(`jackett.server`)
+      kind: Rule
+      services:
+        - name: jackett
+          port: 9117
