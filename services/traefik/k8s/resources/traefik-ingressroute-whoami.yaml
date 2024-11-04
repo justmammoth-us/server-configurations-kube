@@ -16,11 +16,11 @@ spec:
       services:
         - name: whoami
           port: 80
-    - match: Host(`whoami.server`) && PathPrefix(`/outpost.goauthentik.io/`) 
-    # - match: Host(`whoami.server`) && PathPrefix(`/`) 
-      kind: Rule
-      priority: 15
-      services:
-        - kind: Service
-          name: ak-outpost-authentik-embedded-outpost
-          port: 9000
+    #- match: Host(`whoami.server`) && PathPrefix(`/outpost.goauthentik.io/`)
+    # - match: Host(`whoami.server`) && PathPrefix(`/`)
+    #  kind: Rule
+    #  priority: 15
+    #  services:
+    #    - kind: Service
+    #      name: ak-outpost-authentik-embedded-outpost
+    #      port: 9000

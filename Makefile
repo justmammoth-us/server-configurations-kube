@@ -28,5 +28,5 @@ service-radarr:
 service-sonarr:
 	ansible-playbook $(INVENTORY) $(SSH_CONFIG) services/sonarr/playbook.yaml
 
-service-qbittorrent:
-	ansible-playbook $(INVENTORY) $(SSH_CONFIG) services/qbittorrent/playbook.yaml
+service-transmission:
+	ansible-playbook $(INVENTORY) $(SSH_CONFIG) services/transmission/playbook.yaml
