@@ -38,7 +38,7 @@ workload:
               path: /ping
           env:
             SONARR__SERVER__PORT: "{{ .Values.service.main.ports.main.port }}"
-             # External | Basic | Forms
+            # External | Basic | Forms
             SONARR__AUTH__METHOD: ""
             # DisabledForLocalAddresses | Enabled
             SONARR__AUTH__REQUIRED: DisabledForLocalAddresses
@@ -88,7 +88,7 @@ persistence:
           readOnly: true
 metrics:
   main:
-    enabled: true
+    enabled: false
     type: "servicemonitor"
     endpoints:
       - port: metrics
