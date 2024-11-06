@@ -37,6 +37,5 @@ service-jackett:
 deploy-transmission:
 	helm upgrade --install \
 	transmission oci://tccr.io/truecharts/transmission \
-	--values services/transmission/k8s/helm/transmission-values.yaml \
 	--values services/commons/k8s/helm/truecharts-gluetun-values.yaml \
-	--values services/commons/k8s/helm/truecharts-commons-values.yaml
+	--values services/transmission/k8s/helm/transmission-values.yaml

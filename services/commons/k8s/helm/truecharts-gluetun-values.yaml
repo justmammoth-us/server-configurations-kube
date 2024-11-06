@@ -8,35 +8,28 @@ workload:
     podSpec:
       containers:
         gluetun:
-          probes:
+          probes: # TODO
             liveness:
-              enabled: true
+              enabled: false
               type: tcp
             startup:
-              enabled: true
+              enabled: false
               type: tcp
             readiness:
-              enabled: true
+              enabled: false
               type: tcp
           enabled: true
           imageSelector: gluetunImage
           env:
-            TZ: "{{ .Values.TZ }}"
             VPN_TYPE: openvpn
-            VPN_SERVICE_PROVIDER: private internet access
-            OPENVPN_USER: aaa
-            OPENVPN_PASSWORD: aaa
-            FIREWALL_INPUT_PORTS: "9091"
+            VPN_SERVICE_PROVIDER: pia
+            OPENVPN_USER: aaa # TODO
+            OPENVPN_PASSWORD: aaa # TODO
+            FIREWALL_INPUT_PORTS: "8080" # TODO change port on main container
           securityContext:
             capabilities:
               add: ["NET_ADMIN"]
-service:
-  gluetun:
-    enabled: true
-    type: ClusterIP
-    ports:
-      gluetun:
-        enabled: true
-        targetSelector: gluetun
-        port: 9091
-        targetPort: 9091
+              drop: []
+            runAsUser: 0
+            runAsGroup: 0
+            readOnlyRootFilesystem: false
