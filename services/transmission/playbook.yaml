@@ -3,14 +3,21 @@
 
   vars:
     service_state: present
-    values_files: transmission-values.yaml
+    values_files:
+      - src: ./k8s/helm/transmission-values.yaml
+        dest: /tmp/transmission-values.yaml
+      - src: ../commons/k8s/helm/truecharts-gluetun-values.yaml
+        dest: /tmp/truecharts-gluetun-values.yaml
+      - src: ./k8s/helm/transmission-values.yaml
+        dest: /tmp/transmission-values.yaml
     tc_name: transmission
 
   tasks:
     - name: Copy file with owner and permissions
       copy:
-        src: ./k8s/helm/{{ values_files }}
-        dest: /tmp/{{ values_files }}
+        src: '{{ item.src }}'
+        dest: '{{ item.dest }}'
+      with_items: '{{ values_files }}'
 
     - name: Install Helm
       kubernetes.core.helm:
@@ -18,6 +25,5 @@
         name: '{{ tc_name }}'
         chart_ref: oci://tccr.io/truecharts/{{ tc_name }}
         release_namespace: default
-        values_files:
-          - /tmp/{{ values_files }}
+        values_files: '{{ values_files | map(attribute="dest") }}'
         state: '{{ service_state }}'

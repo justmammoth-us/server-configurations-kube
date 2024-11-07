@@ -2,5 +2,5 @@ outputs/*
 *.log
 .vagrantdev
 dev
-*secret.yaml
 ssh.config
+env.yaml

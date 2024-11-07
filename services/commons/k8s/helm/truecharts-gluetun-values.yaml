@@ -23,8 +23,8 @@ workload:
           env:
             VPN_TYPE: openvpn
             VPN_SERVICE_PROVIDER: pia
-            OPENVPN_USER: aaa # TODO
-            OPENVPN_PASSWORD: aaa # TODO
+            #OPENVPN_USER: aaa # TODO
+            #OPENVPN_PASSWORD: aaa # TODO
             FIREWALL_INPUT_PORTS: "8080" # TODO change port on main container
           securityContext:
             capabilities:
@@ -33,3 +33,11 @@ workload:
             runAsUser: 0
             runAsGroup: 0
             readOnlyRootFilesystem: false
+
+secret:
+  openvpn-credentials:
+    enabled: true
+    type: Opaque
+    data:
+      OPENVPN_USERNAME: "{{ .Values.openvpn.username }}" # TODO
+      OPENVPN_PASSWORD: "{{ .Values.openvpn.password }}" # TODO

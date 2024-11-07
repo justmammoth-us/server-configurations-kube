@@ -1,0 +1,26 @@
+- name: Deploy jellyfin
+  hosts: masters
+
+  tasks:
+    - name: Copy configuration file
+      copy:
+        src: ../services
+        dest: /tmp/services
+
+    - name: Service Traefik
+      block:
+        -
+
+    - name: Service Media Storage
+
+    - name: Service Transmission
+
+    - name: Service Jellyfin
+
+    - name: Service Authentik
+
+    - name: Service Radarr
+
+    - name: Service Sonarr
+
+    - name: Service Jackett
