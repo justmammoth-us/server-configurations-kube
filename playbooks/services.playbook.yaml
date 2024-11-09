@@ -4,8 +4,8 @@
   tasks:
     - name: Copy configuration file
       copy:
-        src: ../services
-        dest: /tmp/services
+        src: ../configs
+        dest: /tmp/configs
 
     - name: Service Traefik
       block:
