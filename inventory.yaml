@@ -1,6 +1,6 @@
 masters:
   hosts:
-    master:
+    master-1:
       ansible_user: mammoth # Replace with ssh user
 
 workers:

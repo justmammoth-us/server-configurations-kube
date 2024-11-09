@@ -1,26 +1,59 @@
-- name: Deploy jellyfin
+- name: Deploy services
   hosts: masters
+
+  vars:
+    cfgs_name: configs
+    cfgs_src: '..'
+    cfgs_dest: /tmp
+    cfgs_src_path: '{{ cfgs_src }}/{{ cfgs_name }}'
+    cfgs: '{{ cfgs_dest }}/{{ cfgs_name }}'
 
   tasks:
     - name: Copy configuration file
       copy:
-        src: ../configs
-        dest: /tmp/configs
+        src: '{{ cfgs_src_path }}'
+        dest: '{{ cfgs_dest }}'
 
     - name: Service Traefik
+      tags:
+        - traefik
       block:
-        -
+        - name: Add a Traefik repository
+          kubernetes.core.helm_repository:
+            binary_path: /snap/bin/helm
+            repo_name: traefik
+            repo_url: https://traefik.github.io/charts
 
-    - name: Service Media Storage
+        - name: Install Traefik Helm
+          kubernetes.core.helm:
+            binary_path: /snap/bin/helm
+            name: traefik
+            chart_ref: traefik/traefik
+            update_repo_cache: true
+            release_namespace: default
+            values_files:
+              - '{{ cfgs }}/traefik/k8s/helm/traefik-values.yaml'
+            state: present
+            # chart_version: v3.1.6
 
-    - name: Service Transmission
-
-    - name: Service Jellyfin
-
-    - name: Service Authentik
-
-    - name: Service Radarr
-
-    - name: Service Sonarr
-
-    - name: Service Jackett
+        - name: Apply kubernetes configuration
+          kubernetes.core.k8s:
+            namespace: default
+            #definition: "{{ lookup('file', '{{ item }}') | from_yaml_all }}"
+            src:
+              - '{{ cfgs }}/traefik/k8s/resources'
+            state: present
+          #loop: "{{ q('fileglob', 'k8s/resources/*') }}"
+#    - name: Service Media Storage
+#
+#    - name: Service Transmission
+#
+#    - name: Service Jellyfin
+#
+#    - name: Service Authentik
+#
+#    - name: Service Radarr
+#
+#    - name: Service Sonarr
+#
+#    - name: Service Jackett
