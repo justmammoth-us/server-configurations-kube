@@ -39,11 +39,11 @@
         - name: Apply kubernetes configuration
           kubernetes.core.k8s:
             namespace: default
-            #definition: "{{ lookup('file', '{{ item }}') | from_yaml_all }}"
-            src:
-              - '{{ cfgs }}/traefik/k8s/resources'
+            definition: "{{ lookup('file', '{{ item }}') | from_yaml_all }}"
             state: present
-          #loop: "{{ q('fileglob', 'k8s/resources/*') }}"
+          with_fileglob:
+            - '{{ cfgs_src_path  }}/traefik/k8s/resources/*'
+
 #    - name: Service Media Storage
 #
 #    - name: Service Transmission
