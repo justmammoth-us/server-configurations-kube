@@ -9,10 +9,10 @@
     cfgs: '{{ cfgs_dest }}/{{ cfgs_name }}'
 
   tasks:
-    - name: Copy configuration file
+    - name: Copy HELM values files
       copy:
-        src: '{{ cfgs_src_path }}'
-        dest: '{{ cfgs_dest }}'
+        src: '{{ cfgs_src_path }}/helm'
+        dest: '{{ cfgs }}'
 
     - name: Service Traefik
       tags:
@@ -32,17 +32,17 @@
             update_repo_cache: true
             release_namespace: default
             values_files:
-              - '{{ cfgs }}/traefik/k8s/helm/traefik-values.yaml'
+              - '{{ cfgs }}/helm/traefik-values.yaml'
             state: present
             # chart_version: v3.1.6
 
         - name: Apply kubernetes configuration
           kubernetes.core.k8s:
             namespace: default
-            #definition: "{{ lookup('file', '{{ item }}') | from_yaml_all }}"
-            src:
-              - '{{ cfgs }}/traefik/k8s/resources'
+            definition: "{{ lookup('file', '{{ item }}') | from_yaml_all }}"
             state: present
+          with_fileglob:
+            - '{{ cfgs_src_path }}/k8s/traefik-*.yaml'
           #loop: "{{ q('fileglob', 'k8s/resources/*') }}"
 #    - name: Service Media Storage
 #
