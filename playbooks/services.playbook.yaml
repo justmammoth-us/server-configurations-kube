@@ -43,7 +43,6 @@
             state: present
           with_fileglob:
             - '{{ cfgs_src_path }}/k8s/traefik-*.yaml'
-          #loop: "{{ q('fileglob', 'k8s/resources/*') }}"
 #    - name: Service Media Storage
 #
 #    - name: Service Transmission
