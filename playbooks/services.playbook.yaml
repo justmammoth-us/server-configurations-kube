@@ -15,6 +15,7 @@
       copy:
         src: '{{ cfgs_src_path }}/helm'
         dest: '{{ cfgs }}'
+      when: service_state == "present"
 
     - name: Service Traefik
       tags: [traefik]
@@ -66,6 +67,11 @@
             release_namespace: default
             values_files:
               - '{{ cfgs }}/helm/authentik-values.yaml'
+            values:
+              authentik:
+                bootstrap_email: '{{ authentik.email }}'
+                bootstrap_password: '{{ authentik.password }}'
+                bootstrap_token: '{{ authentik.token }}'
             state: '{{ service_state }}'
 
     - name: Service Media Storage

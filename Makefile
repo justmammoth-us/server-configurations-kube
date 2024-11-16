@@ -1,4 +1,5 @@
 services := all
+state := present
 
 INVENTORY := -i "inventory.yaml"
 SSH_CONFIG := --ssh-common-args "-F ssh.config"
@@ -12,5 +13,6 @@ ssh:
 service:
 	ansible-playbook $(INVENTORY) $(SSH_CONFIG) \
 		-e @secrets.yaml \
+		-e "service_state=$(state)" \
 		--tags $(services) \
 		playbooks/services.playbook.yaml 
