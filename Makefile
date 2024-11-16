@@ -10,4 +10,7 @@ ssh:
 	ssh -L 8080:localhost:32080 -L 8443:localhost:32443 -F ssh.config master-1
 
 service:
-	ansible-playbook $(INVENTORY) $(SSH_CONFIG) playbooks/services.playbook.yaml --tags $(services)
+	ansible-playbook $(INVENTORY) $(SSH_CONFIG) \
+		-e @secrets.yaml \
+		--tags $(services) \
+		playbooks/services.playbook.yaml 

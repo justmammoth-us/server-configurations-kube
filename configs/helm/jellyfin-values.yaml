@@ -16,12 +16,12 @@ persistence:
   media:
     enabled: false
   extraExistingClaimMounts:
-    - name: media-volume
+    - name: tv-media-volume
       mountPath: /tv
-      existingClaim: media-volume
-    - name: media-volume
+      existingClaim: tv-media-volume
+    - name: movies-media-volume
       mountPath: /movies
-      existingClaim: media-volume
+      existingClaim: movies-media-volume
 
 # -- Larger libraries may need to increase the readinessProbe and livenessProbe timeouts. Start by increasing the initialDelaySeconds.
 livenessProbe:

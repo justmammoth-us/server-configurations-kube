@@ -26,6 +26,10 @@ workload:
             #OPENVPN_USER: aaa # TODO
             #OPENVPN_PASSWORD: aaa # TODO
             FIREWALL_INPUT_PORTS: "8080" # TODO change port on main container
+          envFrom:
+            - secretRef:
+                name: openvpn-credentials
+                expandObjectName: true
           securityContext:
             capabilities:
               add: ["NET_ADMIN"]
@@ -39,5 +43,5 @@ secret:
     enabled: true
     type: Opaque
     data:
-      OPENVPN_USERNAME: "{{ .Values.openvpn.username }}" # TODO
+      OPENVPN_USER: "{{ .Values.openvpn.username }}" # TODO
       OPENVPN_PASSWORD: "{{ .Values.openvpn.password }}" # TODO

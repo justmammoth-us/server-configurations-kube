@@ -82,17 +82,29 @@ workload:
 persistence:
   config:
     enabled: true
+    size: 1Gi
+    mountPath: /config
     targetSelector:
       main:
-        main:
-          mountPath: /config
+        main: {}
         exportarr:
-          mountPath: /config
           readOnly: true
-  extraExistingClaimMounts:
-    - name: media-volume
-      mountPath: /movies
-      existingClaim: media-volume
+  movies-media-volume:
+    enabled: true
+    mountPath: /movies
+    type: pvc
+    existingClaim: movies-media-volume
+    targetSelector:
+      main:
+        radarr: {}
+  download-media-volume:
+    enabled: true
+    mountPath: /downloads
+    type: pvc
+    existingClaim: download-media-volume
+    targetSelector:
+      main:
+        radarr: {}
 metrics:
   main:
     enabled: false

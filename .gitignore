@@ -3,4 +3,4 @@ outputs/*
 .vagrantdev
 dev
 ssh.config
-env.yaml
+secrets.yaml

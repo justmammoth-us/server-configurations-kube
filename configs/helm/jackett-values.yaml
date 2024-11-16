@@ -24,7 +24,11 @@ workload:
 persistence:
   config:
     enabled: true
+    size: 1Gi
     mountPath: "/config"
+    targetSelector:
+      main:
+        main: {}
 portal:
   open:
     enabled: true

@@ -3,11 +3,11 @@
 
   vars:
     service_state: present
-    cfgs_name: configs
-    cfgs_src: '..'
-    cfgs_dest: /tmp
-    cfgs_src_path: '{{ cfgs_src }}/{{ cfgs_name }}'
-    cfgs: '{{ cfgs_dest }}/{{ cfgs_name }}'
+    cfgs_dir_name: configs
+    src_path: '..'
+    cfgs_dest_path: /tmp
+    cfgs_src_path: '{{ src_path }}/{{ cfgs_dir_name }}'
+    cfgs: '{{ cfgs_dest_path }}/{{ cfgs_dir_name }}'
 
   tasks:
     - name: Copy HELM values files
@@ -32,7 +32,7 @@
             name: traefik
             chart_ref: traefik/traefik
             # chart_version: v3.1.6
-            update_repo_cache: true
+            update_repo_cache: '{{ service_state == "present" }}'
             release_namespace: default
             values_files:
               - '{{ cfgs }}/helm/traefik-values.yaml'
@@ -62,7 +62,7 @@
             name: authentik
             chart_ref: authentik/authentik
             chart_version: 2024.8.3
-            update_repo_cache: true
+            update_repo_cache: '{{ service_state == "present" }}'
             release_namespace: default
             values_files:
               - '{{ cfgs }}/helm/authentik-values.yaml'
@@ -78,22 +78,6 @@
             state: '{{ service_state }}'
           with_fileglob:
             - '{{ cfgs_src_path }}/k8s/mediastorage-*.yaml'
-
-    - name: Service Transmission
-      tags: [transmission]
-      block:
-        - name: Install Transmission Helm
-          vars:
-            tc_name: transmission
-          kubernetes.core.helm:
-            binary_path: /snap/bin/helm
-            name: '{{ tc_name }}'
-            chart_ref: oci://tccr.io/truecharts/{{ tc_name }}
-            release_namespace: default
-            values_files:
-              - '{{ cfgs }}/helm/{{ tc_name }}-values.yaml'
-              - '{{ cfgs }}/helm/commons-gluetun-values.yaml'
-            state: '{{ service_state }}'
 
     - name: Service Jellyfin
       tags: [jellyfin]
@@ -154,4 +138,28 @@
             values_files:
               - '{{ cfgs }}/helm/{{ tc_name }}-values.yaml'
               - '{{ cfgs }}/helm/commons-gluetun-values.yaml'
+            values:
+              openvpn:
+                username: '{{ openvpn.username }}'
+                password: '{{ openvpn.password }}'
+            state: '{{ service_state }}'
+
+    - name: Service Transmission
+      tags: [transmission]
+      block:
+        - name: Install Transmission Helm
+          vars:
+            tc_name: transmission
+          kubernetes.core.helm:
+            binary_path: /snap/bin/helm
+            name: '{{ tc_name }}'
+            chart_ref: oci://tccr.io/truecharts/{{ tc_name }}
+            release_namespace: default
+            values_files:
+              - '{{ cfgs }}/helm/{{ tc_name }}-values.yaml'
+              - '{{ cfgs }}/helm/commons-gluetun-values.yaml'
+            values:
+              openvpn:
+                username: '{{ openvpn.username }}'
+                password: '{{ openvpn.password }}'
             state: '{{ service_state }}'

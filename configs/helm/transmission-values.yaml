@@ -86,7 +86,7 @@ workload:
             # TRANSMISSION__RPC_ENABLED: true
             # TRANSMISSION__RPC_HOST_WHITELIST: ""
             # TRANSMISSION__RPC_HOST_WHITELIST_ENABLED: false
-            TRANSMISSION__RPC_PORT: "{{ .Values.service.main.ports.main.port }}"
+            TRANSMISSION__RPC_PORT: "{{ $.Values.service.main.ports.main.port }}"
             # TRANSMISSION__RPC_URL: "/transmission/"
             # TRANSMISSION__RPC_WHITELIST: ""
             # TRANSMISSION__RPC_WHITELIST_ENABLED: false
@@ -110,10 +110,18 @@ persistence:
   config:
     enabled: true
     mountPath: "/config"
-  extraExistingClaimMounts:
-    - name: download-volume
-      mountPath: /downloads
-      existingClaim: download-volume
+    size: 1Gi
+    targetSelector:
+      main:
+        transmission: {}
+  download-media-volume:
+    enabled: true
+    mountPath: /downloads
+    type: pvc
+    existingClaim: download-media-volume
+    targetSelector:
+      main:
+        transmission: {}
 portal:
   open:
     enabled: true
