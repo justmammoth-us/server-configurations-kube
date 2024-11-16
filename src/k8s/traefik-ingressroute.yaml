@@ -1,7 +1,7 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: routes
+  name: authentik-routes
   namespace: default
 spec:
   entryPoints:
@@ -12,42 +12,86 @@ spec:
       services:
         - name: authentik-server
           port: 80
-
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: jellyfin-routes
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
     - match: Host(`jellyfin.server`)
       kind: Rule
       services:
         - name: jellyfin
           port: 8096
-
-    - match: Host(`torrent.server`)
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: transmission-routes
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`transmission.server`)
       kind: Rule
       services:
         - name: transmission
           port: 10109
-
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: sonarr-routes
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
     - match: Host(`sonarr.server`)
       kind: Rule
       services:
         - name: sonarr
           port: 8989
-
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: radarr-routes
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
     - match: Host(`radarr.server`)
       kind: Rule
       services:
         - name: radarr
           port: 7878
-
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: jackett-routes
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
     - match: Host(`jackett.server`)
       kind: Rule
       services:
         - name: jackett
           port: 9117
-
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: whoami
+  name: whoami-routes
   namespace: default
 spec:
   entryPoints:

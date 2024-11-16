@@ -75,7 +75,7 @@
             state: '{{ service_state }}'
 
     - name: Service Media Storage
-      tags: [mediastorage]
+      tags: [mediastorage, jellyfin, radarr, sonarr, transmission]
       block:
         - name: Apply Media Storage Resources
           kubernetes.core.k8s:
