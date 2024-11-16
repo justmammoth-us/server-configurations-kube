@@ -86,6 +86,10 @@ persistence:
         exportarr:
           mountPath: /config
           readOnly: true
+  extraExistingClaimMounts:
+    - name: media-volume
+      mountPath: /tv
+      existingClaim: media-volume
 metrics:
   main:
     enabled: false

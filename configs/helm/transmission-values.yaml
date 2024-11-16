@@ -110,6 +110,10 @@ persistence:
   config:
     enabled: true
     mountPath: "/config"
+  extraExistingClaimMounts:
+    - name: download-volume
+      mountPath: /downloads
+      existingClaim: download-volume
 portal:
   open:
     enabled: true
