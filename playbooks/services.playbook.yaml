@@ -19,7 +19,7 @@
     - name: Service Traefik
       tags: [traefik]
       block:
-        - name: Add a Traefik repository
+        - name: Add Traefik repository
           kubernetes.core.helm_repository:
             binary_path: /snap/bin/helm
             repo_name: traefik
@@ -38,7 +38,7 @@
               - '{{ cfgs }}/helm/traefik-values.yaml'
             state: '{{ service_state }}'
 
-        - name: Apply kubernetes configuration
+        - name: Apply Traefik Resources
           kubernetes.core.k8s:
             namespace: default
             definition: "{{ lookup('file', '{{ item }}') | from_yaml_all }}"
@@ -46,14 +46,32 @@
           with_fileglob:
             - '{{ cfgs_src_path }}/k8s/traefik-*.yaml'
 
-    #- name: Service Authentik
-    #  tags: [authentik]
-    #  block:
+    - name: Service Authentik
+      tags: [authentik]
+      block:
+        - name: Add a Authentik repository
+          kubernetes.core.helm_repository:
+            binary_path: /snap/bin/helm
+            repo_name: authentik
+            repo_url: https://charts.goauthentik.io
+            state: '{{ service_state }}'
+
+        - name: Install Authentik Helm
+          kubernetes.core.helm:
+            binary_path: /snap/bin/helm
+            name: authentik
+            chart_ref: authentik/authentik
+            chart_version: 2024.8.3
+            update_repo_cache: true
+            release_namespace: default
+            values_files:
+              - '{{ cfgs }}/helm/authentik-values.yaml'
+            state: '{{ service_state }}'
 
     - name: Service Media Storage
       tags: [mediastorage]
       block:
-        - name: Apply kubernetes configuration
+        - name: Apply Media Storage Resources
           kubernetes.core.k8s:
             namespace: default
             definition: "{{ lookup('file', '{{ item }}') | from_yaml_all }}"
@@ -64,7 +82,7 @@
     - name: Service Transmission
       tags: [transmission]
       block:
-        - name: Install Helm
+        - name: Install Transmission Helm
           vars:
             tc_name: transmission
           kubernetes.core.helm:
@@ -80,7 +98,7 @@
     - name: Service Jellyfin
       tags: [jellyfin]
       block:
-        - name: Install Helm
+        - name: Install Jellyfin Helm
           vars:
             jellyfin_version: 1.3.0
           kubernetes.core.helm:
@@ -95,7 +113,7 @@
     - name: Service Sonarr
       tags: [sonarr]
       block:
-        - name: Install Helm
+        - name: Install Sonarr Helm
           vars:
             tc_name: sonarr
           kubernetes.core.helm:
@@ -110,7 +128,7 @@
     - name: Service Radarr
       tags: [radarr]
       block:
-        - name: Install Helm
+        - name: Install Radarr Helm
           vars:
             tc_name: radarr
           kubernetes.core.helm:
@@ -122,17 +140,18 @@
               - '{{ cfgs }}/helm/{{ tc_name }}-values.yaml'
             state: '{{ service_state }}'
 
-    #- name: Service Jackett
-    #  tags: [jackett]
-    #  block:
-    #    - name: Install Helm
-    #      vars:
-    #        tc_name: jackett
-    #      kubernetes.core.helm:
-    #        binary_path: /snap/bin/helm
-    #        name: '{{ tc_name }}'
-    #        chart_ref: oci://tccr.io/truecharts/{{ tc_name }}
-    #        release_namespace: default
-    #        values_files:
-    #          - '{{ cfgs }}/helm/{{ tc_name }}-values.yaml'
-    #        state: '{{ service_state }}'
+    - name: Service Jackett
+      tags: [jackett]
+      block:
+        - name: Install Jackett Helm
+          vars:
+            tc_name: jackett
+          kubernetes.core.helm:
+            binary_path: /snap/bin/helm
+            name: '{{ tc_name }}'
+            chart_ref: oci://tccr.io/truecharts/{{ tc_name }}
+            release_namespace: default
+            values_files:
+              - '{{ cfgs }}/helm/{{ tc_name }}-values.yaml'
+              - '{{ cfgs }}/helm/commons-gluetun-values.yaml'
+            state: '{{ service_state }}'
