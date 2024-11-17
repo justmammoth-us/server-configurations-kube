@@ -86,22 +86,22 @@ persistence:
         main: {}
         exportarr:
           readOnly: true
-  tv-media-volume:
+  tv-media:
     enabled: true
-    mountPath: /tv
     type: pvc
     existingClaim: tv-media-volume
     targetSelector:
       main:
-        sonarr: {}
-  download-media-volume:
+        main:
+          mountPath: /tv
+  download-media:
     enabled: true
-    mountPath: /downloads
     type: pvc
     existingClaim: download-media-volume
     targetSelector:
       main:
-        sonarr: {}
+        main:
+          mountPath: /downloads
 
 metrics:
   main:

@@ -3,7 +3,7 @@
 
   vars:
     service_state: present
-    cfgs_dir_name: configs
+    cfgs_dir_name: src
     src_path: '..'
     cfgs_dest_path: /tmp
     cfgs_src_path: '{{ src_path }}/{{ cfgs_dir_name }}'
@@ -84,20 +84,21 @@
             state: '{{ service_state }}'
           with_fileglob:
             - '{{ cfgs_src_path }}/k8s/mediastorage-*.yaml'
+      when: service_state == "present"
 
     - name: Service Jellyfin
       tags: [jellyfin]
       block:
         - name: Install Jellyfin Helm
           vars:
-            jellyfin_version: 1.3.0
+            tc_name: jellyfin
           kubernetes.core.helm:
             binary_path: /snap/bin/helm
-            name: jellyfin
-            chart_ref: https://github.com/jellyfin/jellyfin-helm/releases/download/jellyfin-{{ jellyfin_version }}/jellyfin-{{ jellyfin_version }}.tgz
+            name: '{{ tc_name }}'
+            chart_ref: oci://tccr.io/truecharts/{{ tc_name }}
             release_namespace: default
             values_files:
-              - '{{ cfgs }}/helm/jellyfin-values.yaml'
+              - '{{ cfgs }}/helm/{{ tc_name }}-values.yaml'
             state: '{{ service_state }}'
 
     - name: Service Sonarr

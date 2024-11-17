@@ -89,22 +89,22 @@ persistence:
         main: {}
         exportarr:
           readOnly: true
-  movies-media-volume:
+  movies-media:
     enabled: true
-    mountPath: /movies
     type: pvc
     existingClaim: movies-media-volume
     targetSelector:
       main:
-        radarr: {}
-  download-media-volume:
+        main:
+          mountPath: /movies
+  download-media:
     enabled: true
-    mountPath: /downloads
     type: pvc
     existingClaim: download-media-volume
     targetSelector:
       main:
-        radarr: {}
+        main:
+          mountPath: /downloads
 metrics:
   main:
     enabled: false
