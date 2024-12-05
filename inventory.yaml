@@ -1,7 +1,5 @@
 masters:
   hosts:
     master-1:
-      ansible_user: debian # Replace with ssh user
-
-workers:
-  hosts:
+#workers:
+#  hosts:
