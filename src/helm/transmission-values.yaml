@@ -20,6 +20,7 @@ service:
         protocol: udp
 workload:
   main:
+    replicas: 1
     podSpec:
       containers:
         main:
